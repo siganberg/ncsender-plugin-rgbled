@@ -1,0 +1,24 @@
+{
+  "id": "com.ncsender.rgbled",
+  "name": "RGB LED",
+  "version": "0.1.0-beta",
+  "minAppVersion": "0.3.111",
+  "author": "FrancisCreation",
+  "description": "Drives the wireless RGB LED accessory strip. Pushes machine status to the LED controller so the strip mirrors what the app's header shows — idle / running / alarm / probing / job-complete.",
+  "entry": "index.js",
+  "commands": "commands.js",
+  "configUi": "config.html",
+  "icon": "icon.png",
+  "category": "utility",
+  "repository": "https://github.com/siganberg/ncsender-plugin-rgbled",
+  "priority": 20,
+  "platforms": {
+    "v1": "0.3.19",
+    "pro-v1": "0.3.19",
+    "pro-v2": "2.0.0"
+  },
+  "events": ["background"],
+  "toolMenu": [
+    { "id": "open-config", "label": "RGB LED", "icon": "icon.png", "clientOnly": true }
+  ]
+}
