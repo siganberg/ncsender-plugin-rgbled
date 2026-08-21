@@ -33,30 +33,41 @@ function isDeviceReachable() {
 }
 
 function pump() {
-  // Skip when the accessory isn't paired at all — no point framing lines the
-  // dongle will drop. Cheap enough to check every tick.
+  // Machine state is delivered to the strip by the dongle's DRO broadcast
+  // (dongle firmware >= dro-broadcast build) — the firmware parses the
+  // `$<status>|…` frames directly. Pushing `state <name>` from here on top
+  // of that produced flip-flops on jog release: broadcast said $idle, our
+  // tagged unicast said `state jogging` (from a still-fresh lastSent), and
+  // both landed on the same s_state in the device. So this pump no longer
+  // repeats DRO information.
+  //
+  // The one thing DRO can't express is "the job just finished cleanly":
+  // senderStatus goes straight back to idle after a completion, which looks
+  // identical to a machine sitting quiet. Watch jobStatus for the
+  // running -> completed edge and fire `state complete` once; the device
+  // latches it, and the DRO `$idle` frames that follow don't clear it.
   if (!isDeviceReachable()) return;
 
   const s = pluginContext.getServerState();
-  let status = s && s.senderStatus;
-  if (!status) return;
+  const job = s && s.jobStatus != null ? String(s.jobStatus) : null;
+  if (job === lastJobStatus) return;
 
-  // Job completion isn't expressible in senderStatus: a finished job just
-  // returns to idle. Fire once on the running -> completed edge; the device
-  // latches complete and the idle keepalives that follow won't clear it.
-  const job = s.jobStatus == null ? null : String(s.jobStatus);
-  if (job !== lastJobStatus) {
-    if (job && job.toLowerCase() === 'completed') status = 'complete';
-    lastJobStatus = job;
+  lastJobStatus = job;
+
+  // Fire on ANY transition INTO completed (not just running -> completed).
+  // A stricter check missed cases where the plugin loaded mid-job or where
+  // the tick straddled the boundary and never observed 'running' first.
+  // `stopped`/`error`/`null` fall through and the strip stays with whatever
+  // DRO is reporting.
+  if (job && job.toLowerCase() === 'completed') {
+    // Burst three to survive an occasional dropped packet — one-shot only,
+    // no keepalive follows.
+    pluginContext.dongle.send(DEVICE, 'state complete');
+    pluginContext.dongle.send(DEVICE, 'state complete');
+    pluginContext.dongle.send(DEVICE, 'state complete');
+    lastSent = 'complete';
+    lastSentAt = now();
   }
-
-  const t = now();
-  const changed = status !== lastSent;
-  if (!changed && (t - lastSentAt) < KEEPALIVE_MS) return;
-
-  pluginContext.dongle.send(DEVICE, 'state ' + status);
-  lastSent = status;
-  lastSentAt = t;
 }
 
 pluginContext.log('RGB LED plugin loaded — pumping status to @' + DEVICE);
