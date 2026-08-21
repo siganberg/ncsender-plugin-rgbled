@@ -1,7 +1,7 @@
 {
   "id": "com.ncsender.rgbled",
   "name": "RGB LED",
-  "version": "0.1.0-beta",
+  "version": "0.1.1",
   "minAppVersion": "0.3.111",
   "author": "FrancisCreation",
   "description": "Drives the wireless RGB LED accessory strip. Pushes machine status to the LED controller so the strip mirrors what the app's header shows — idle / running / alarm / probing / job-complete.",
