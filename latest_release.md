@@ -1,7 +1,5 @@
+Warning: no stdin data received in 3s, proceeding without it. If piping from a slow command, redirect stdin explicitly: < /dev/null to skip, or wait longer.
 ## What's Changed
 
 ### 🔧 Improvements
-- Streamlined the plugin runtime into a lightweight customization shell, making it simpler to tailor LED behavior to your setup
-
-### 🐛 Bug Fixes
-- Job completion state now triggers only once when a job actually finishes, instead of repeating while the machine sits idle
+- Improved plugin startup reliability by removing an unsupported logging call during plugin load
