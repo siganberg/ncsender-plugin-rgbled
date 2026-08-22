@@ -367,89 +367,89 @@
   .rgb-color-reset:disabled { opacity: 0.35; cursor: not-allowed; }
   .rgb-panel-actions { display: flex; gap: 8px; }
 
-  /* -------- Firmware tab -------- */
-  .rgb-fw-row {
-    display: flex; align-items: baseline; justify-content: space-between;
-    padding: 4px 0;
-    font-size: 0.86rem;
+  /* -------- Firmware Update card — mirrors AutoDustBoot's styling for
+       consistency across the plugin family. -------- */
+  .rgb-fw-card {
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    background: rgba(255,255,255,0.02);
+    overflow: hidden;
   }
-  .rgb-fw-row + .rgb-fw-row { border-top: 1px dashed color-mix(in srgb, var(--color-border) 30%, transparent); }
-  .rgb-fw-row-label { color: var(--color-text-secondary, #94a3b8); font-size: 0.78rem; letter-spacing: 0.02em; }
-  .rgb-fw-row-value {
+  .rgb-fw-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.95rem; font-weight: 500;
     color: var(--color-text-primary, #e5e7eb);
-    font-variant-numeric: tabular-nums;
-    font-weight: 500;
   }
-  .rgb-fw-row-value--muted { color: var(--color-text-secondary, #94a3b8); font-weight: 400; }
-  .rgb-fw-row-value--ok { color: #22c55e; }
-  .rgb-fw-row-value--warn { color: #f59e0b; }
-  .rgb-fw-status {
-    padding: 8px 12px; margin-top: 4px;
-    border-radius: 8px;
-    background: color-mix(in srgb, var(--color-border) 20%, transparent);
-    font-size: 0.84rem; color: var(--color-text-secondary, #94a3b8);
-    transition: color 0.15s, background 0.15s;
-  }
-  .rgb-fw-status--ok   { background: color-mix(in srgb, #22c55e 12%, transparent); color: #86efac; }
-  .rgb-fw-status--warn { background: color-mix(in srgb, #f59e0b 12%, transparent); color: #fcd34d; }
-  .rgb-fw-status--err  { background: color-mix(in srgb, #ef4444 12%, transparent); color: #fca5a5; }
-  .rgb-fw-status--busy::before {
-    content: ''; display: inline-block; width: 10px; height: 10px; margin-right: 8px;
-    border-radius: 50%; border: 2px solid currentColor; border-top-color: transparent;
-    vertical-align: middle;
-    animation: rgb-fw-spin 0.8s linear infinite;
-  }
-  @keyframes rgb-fw-spin { to { transform: rotate(360deg); } }
-
-  .rgb-fw-progress {
-    display: flex; flex-direction: column; gap: 6px;
-    padding: 4px 0 2px;
-  }
-  .rgb-fw-progress-track {
-    position: relative;
-    height: 10px; border-radius: 999px;
-    background: color-mix(in srgb, var(--color-border) 45%, transparent);
-    overflow: hidden;
-  }
-  .rgb-fw-progress-fill {
-    height: 100%; width: 0%;
-    border-radius: inherit;
-    background: linear-gradient(90deg,
-      var(--color-accent, #4a90e2) 0%,
-      color-mix(in srgb, var(--color-accent, #4a90e2) 60%, #22c55e) 100%);
-    box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent, #4a90e2) 55%, transparent);
-    transition: width 0.35s cubic-bezier(0.16, 0.84, 0.44, 1);
-    position: relative;
-    overflow: hidden;
-  }
-  /* Shimmer stripes across the fill for a lively "working" feel. */
-  .rgb-fw-progress-fill::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: repeating-linear-gradient(-60deg,
-      rgba(255,255,255,0.14) 0 12px,
-      transparent 12px 24px);
-    animation: rgb-fw-shimmer 0.9s linear infinite;
-  }
-  @keyframes rgb-fw-shimmer { to { transform: translateX(24px); } }
-  .rgb-fw-progress-label {
-    align-self: flex-end;
-    font-size: 0.74rem; font-variant-numeric: tabular-nums;
+  .rgb-fw-header > svg { color: var(--color-text-secondary, #94a3b8); }
+  .rgb-fw-header-title { font-weight: 500; font-size: 0.95rem; flex: 1; color: var(--color-text-primary, #e5e7eb); }
+  .rgb-fw-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.02em;
+    background: color-mix(in srgb, #9ca3af 15%, transparent);
     color: var(--color-text-secondary, #94a3b8);
   }
+  .rgb-fw-link-dot { width: 8px; height: 8px; border-radius: 50%; background: #9ca3af; flex: 0 0 auto; }
+  .rgb-fw-link--ok { background: color-mix(in srgb, #22c55e 15%, transparent); color: #22c55e; }
+  .rgb-fw-link--ok .rgb-fw-link-dot { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.18); }
+  .rgb-fw-link--warn { background: color-mix(in srgb, #f59e0b 15%, transparent); color: #f59e0b; }
+  .rgb-fw-link--warn .rgb-fw-link-dot { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.18); }
+  .rgb-fw-body {
+    display: flex; flex-direction: column; justify-content: center;
+    gap: 6px; min-height: 44px;
+    padding: 8px 14px;
+  }
+  .rgb-fw-status { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: var(--color-text-primary, #e5e7eb); }
+  .rgb-fw-status--muted { color: var(--color-text-secondary, #94a3b8); }
+  .rgb-fw-status--ok    { color: #22c55e; }
+  .rgb-fw-status--warn  { color: #f59e0b; }
+  .rgb-fw-status--err   { color: #ef4444; }
+  .rgb-fw-info-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .rgb-fw-actions  { display: flex; gap: 8px; flex-wrap: nowrap; }
+  .rgb-fw-action-btn {
+    padding: 5px 12px; border-radius: 6px;
+    font-size: 0.8rem; font-weight: 500;
+    cursor: pointer; transition: filter 0.15s, background 0.15s;
+    white-space: nowrap;
+    font-family: inherit; border: 1px solid transparent;
+  }
+  .rgb-fw-action-btn--primary {
+    background: var(--color-accent, #4a90e2);
+    border-color: var(--color-accent, #4a90e2);
+    color: #fff;
+  }
+  .rgb-fw-action-btn--primary:hover:not(:disabled) { filter: brightness(1.08); }
+  .rgb-fw-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  .rgb-fw-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
-  .rgb-btn--primary {
-    background: var(--color-accent, #4a90e2) !important;
-    border-color: var(--color-accent, #4a90e2) !important;
-    color: #fff !important;
+  .rgb-fw-progress {
+    margin-top: 12px;
+    height: 6px; border-radius: 3px;
+    background: rgba(255,255,255,0.06);
+    overflow: hidden;
   }
-  .rgb-btn--primary:hover:not(:disabled) {
-    filter: brightness(1.08);
-    background: var(--color-accent, #4a90e2) !important;
-    color: #fff !important;
+  .rgb-fw-progress-bar {
+    height: 100%; width: 0%;
+    background: var(--color-accent, #4a90e2);
+    transition: width 0.25s ease;
   }
-  .rgb-btn--primary:disabled { opacity: 0.4; }
+  .rgb-fw-progress-label {
+    display: flex; justify-content: space-between;
+    margin-top: 6px; font-size: 0.78rem;
+    color: var(--color-text-secondary, #94a3b8);
+  }
+  .rgb-fw-spin {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(128,128,128,0.25);
+    border-top-color: var(--color-accent, #4a90e2);
+    border-radius: 50%;
+    animation: rgb-fw-spin 0.9s linear infinite;
+  }
+  @keyframes rgb-fw-spin { to { transform: rotate(360deg); } }
   .rgb-btn {
     -webkit-appearance: none; appearance: none;
     padding: 8px 14px;
@@ -652,28 +652,39 @@
         </div>
       </header>
       <div class="rgb-panel">
-        <div class="rgb-controls">
-          <div class="rgb-card-header">
-            <span class="rgb-card-title">Version</span>
-            <button type="button" class="rgb-link-btn" id="rgb-fw-recheck">Recheck</button>
+        <div class="rgb-fw-card">
+          <div class="rgb-fw-header">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span class="rgb-fw-header-title">Firmware Update</span>
+            <span class="rgb-fw-link" id="rgb-fw-link">
+              <span class="rgb-fw-link-dot"></span>
+              <span class="rgb-fw-link-label">Checking…</span>
+            </span>
           </div>
-          <div class="rgb-fw-row">
-            <span class="rgb-fw-row-label">Installed</span>
-            <span class="rgb-fw-row-value" id="rgb-fw-current">—</span>
-          </div>
-          <div class="rgb-fw-row">
-            <span class="rgb-fw-row-label">Latest</span>
-            <span class="rgb-fw-row-value" id="rgb-fw-latest">—</span>
-          </div>
-          <div class="rgb-fw-status" id="rgb-fw-status">Checking for updates…</div>
-          <div class="rgb-fw-progress" id="rgb-fw-progress" hidden>
-            <div class="rgb-fw-progress-track">
-              <div class="rgb-fw-progress-fill" id="rgb-fw-progressFill" style="width:0%"></div>
+          <div class="rgb-fw-body">
+            <div class="rgb-fw-info-row">
+              <div id="rgb-fw-status" class="rgb-fw-status rgb-fw-status--muted">
+                <span>Checking for updates…</span>
+              </div>
+              <div class="rgb-fw-actions">
+                <button type="button" id="rgb-fw-update" class="rgb-fw-action-btn rgb-fw-action-btn--primary" style="display:none">
+                  <span class="rgb-fw-update-label">Update Firmware</span>
+                </button>
+              </div>
             </div>
-            <span class="rgb-fw-progress-label" id="rgb-fw-progressLabel">0%</span>
-          </div>
-          <div class="rgb-fw-actions">
-            <button type="button" class="rgb-btn rgb-btn--primary" id="rgb-fw-update" disabled>Update</button>
+            <div id="rgb-fw-progress-wrap" style="display:none">
+              <div class="rgb-fw-progress">
+                <div id="rgb-fw-progress-bar" class="rgb-fw-progress-bar"></div>
+              </div>
+              <div class="rgb-fw-progress-label">
+                <span id="rgb-fw-progress-msg">Starting…</span>
+                <span id="rgb-fw-progress-pct">0%</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -780,14 +791,21 @@
 
     document.getElementById('rgb-pairBtn').style.display = rgb.known ? 'none' : '';
 
-    // Firmware tab mirrors the connection state and the strip's reported
-    // version. If we've been previously up-to-date and the strip just
-    // reported a fresher version, refresh the row + button state.
+    // Firmware tab mirrors the strip's reported version + link state.
     if (typeof fw !== 'undefined') {
       if (rgb.version && rgb.version !== fw.current) {
         fw.current = rgb.version;
-        if (fw.latest) fw.updateAvailable = isNewerVersion(fw.latest, fw.current);
-        showFwVersions(fw.current, fw.latest);
+        // Progress driver: if we're mid-update and the strip just
+        // rebooted into the target version, finalise the bar.
+        fwOnVersionArrived(fw.current);
+        if (fw.latest && !fw.checking && !fw.updating) {
+          fw.updateAvailable = isNewerVersion(fw.latest, fw.current);
+          if (fw.updateAvailable) {
+            setFwStatus('warn', 'Update available: v' + fw.latest + ' (installed v' + fw.current + ')');
+          } else {
+            setFwStatus('ok', 'Firmware is up to date (v' + fw.current + ')');
+          }
+        }
       }
       updateFwButton();
     }
@@ -1061,38 +1079,41 @@
 
   function setFwStatus(kind, msg, busy) {
     var el = fwEl('rgb-fw-status'); if (!el) return;
-    el.className = 'rgb-fw-status' + (kind ? ' rgb-fw-status--' + kind : '') + (busy ? ' rgb-fw-status--busy' : '');
-    el.textContent = msg || '';
+    el.className = 'rgb-fw-status' + (kind ? ' rgb-fw-status--' + kind : ' rgb-fw-status--muted');
+    var inner = '';
+    if (busy) inner += '<span class="rgb-fw-spin" aria-hidden="true"></span>';
+    inner += '<span>' + (msg || '') + '</span>';
+    el.innerHTML = inner;
   }
-  function setFwProgress(pct, label) {
-    var box = fwEl('rgb-fw-progress'); if (!box) return;
-    box.hidden = false;
+  function setFwProgress(pct, msg) {
+    var wrap = fwEl('rgb-fw-progress-wrap'); if (!wrap) return;
+    wrap.style.display = '';
     var clamped = Math.max(0, Math.min(100, Math.round(pct)));
-    fwEl('rgb-fw-progressFill').style.width = clamped + '%';
-    fwEl('rgb-fw-progressLabel').textContent = (label ? label + ' — ' : '') + clamped + '%';
+    fwEl('rgb-fw-progress-bar').style.width = clamped + '%';
+    fwEl('rgb-fw-progress-msg').textContent = msg || '';
+    fwEl('rgb-fw-progress-pct').textContent = clamped + '%';
   }
-  function hideFwProgress() { var box = fwEl('rgb-fw-progress'); if (box) box.hidden = true; }
-  function showFwVersions(current, latest) {
-    var cur = fwEl('rgb-fw-current');
-    var lat = fwEl('rgb-fw-latest');
-    if (cur) {
-      cur.textContent = current ? 'v' + current : '—';
-      cur.classList.toggle('rgb-fw-row-value--muted', !current);
-    }
-    if (lat) {
-      lat.textContent = latest ? 'v' + latest : '—';
-      lat.classList.toggle('rgb-fw-row-value--muted', !latest);
-      lat.classList.toggle('rgb-fw-row-value--ok', !!(latest && current && !isNewerVersion(latest, current)));
-      lat.classList.toggle('rgb-fw-row-value--warn', !!(latest && current && isNewerVersion(latest, current)));
-    }
+  function hideFwProgress() {
+    var wrap = fwEl('rgb-fw-progress-wrap'); if (wrap) wrap.style.display = 'none';
+  }
+  function setFwLinkBadge(kind, label) {
+    var badge = fwEl('rgb-fw-link'); if (!badge) return;
+    badge.className = 'rgb-fw-link' + (kind ? ' rgb-fw-link--' + kind : '');
+    var lbl = badge.querySelector('.rgb-fw-link-label');
+    if (lbl) lbl.textContent = label;
   }
   function updateFwButton() {
     var btn = fwEl('rgb-fw-update'); if (!btn) return;
     var canUpdate = fw.updateAvailable && !fw.updating && !fw.checking && rgb.connected && !!fw.downloadUrl;
+    btn.style.display = fw.updateAvailable && !fw.updating ? '' : 'none';
     btn.disabled = !canUpdate;
     btn.title = canUpdate
       ? 'Flash v' + fw.latest + ' wirelessly'
-      : (fw.updating ? 'Update in progress' : (fw.updateAvailable ? 'Not connected' : 'Up to date'));
+      : (fw.updating ? 'Update in progress' : 'Not connected');
+    // Link badge mirrors connectivity like AutoDustBoot's license chip.
+    if (!rgb.known) setFwLinkBadge('', 'Not paired');
+    else if (!rgb.connected) setFwLinkBadge('warn', 'Offline');
+    else setFwLinkBadge('ok', 'Connected');
   }
   function isNewerVersion(latest, current) {
     if (!latest) return false;
@@ -1121,8 +1142,7 @@
     if (fw.checking || fw.updating) return;
     fw.checking = true;
     fw.current = rgb.version || fw.current;
-    showFwVersions(fw.current, '');
-    setFwStatus('', 'Checking for updates…', true);
+    setFwStatus('muted', 'Checking for updates…', true);
     updateFwButton();
     try {
       var release = await fetchLatestRelease();
@@ -1133,13 +1153,12 @@
         fw.latest = release.latest;
         fw.downloadUrl = release.downloadUrl;
         fw.updateAvailable = !!(fw.current && isNewerVersion(fw.latest, fw.current));
-        showFwVersions(fw.current, fw.latest);
         if (!fw.current) {
-          setFwStatus('', 'Waiting for the RGB LED controller to report its version…');
+          setFwStatus('muted', 'Waiting for the RGB LED controller to report its version…');
         } else if (fw.updateAvailable) {
-          setFwStatus('warn', 'Update available: v' + fw.latest);
+          setFwStatus('warn', 'Update available: v' + fw.latest + ' (installed v' + fw.current + ')');
         } else {
-          setFwStatus('ok', 'Firmware is up to date.');
+          setFwStatus('ok', 'Firmware is up to date (v' + fw.current + ')');
         }
       }
     } catch (_) {
@@ -1151,12 +1170,31 @@
     }
   }
 
+  // Plugin iframes don't get the `plugin-ota:*` WebSocket bridge from the
+  // parent app, so we can't rely on progress events for the bar. Drive
+  // the bar off wall-clock time up to 90 % during the flash window, then
+  // let the heartbeat's version change land us at 100 % and close out.
+  // EXPECTED_MS is generous — 25 s covers the ~15 s a typical wireless
+  // flash takes plus overhead; we'll snap to 100 the moment the strip
+  // reboots and reports the new version.
+  var FW_EXPECTED_MS = 25000;
+  var FW_TIMEOUT_MS  = 90000;
+  var fwProgressTimer = null;
+  var fwWatchdogTimer = null;
+
+  function stopFwTimers() {
+    if (fwProgressTimer) { clearInterval(fwProgressTimer); fwProgressTimer = null; }
+    if (fwWatchdogTimer) { clearTimeout(fwWatchdogTimer); fwWatchdogTimer = null; }
+  }
+
   async function startFirmwareUpdate() {
     if (fw.updating || !fw.updateAvailable || !fw.downloadUrl) return;
     fw.updating = true;
+    fw.updateStartedMs = Date.now();
+    fw.pendingTarget = fw.latest;
     updateFwButton();
-    setFwStatus('', 'Downloading v' + fw.latest + '…', true);
-    setFwProgress(0, 'Downloading');
+    setFwStatus('muted', 'Uploading firmware to the strip…', true);
+    setFwProgress(0, 'Uploading firmware…');
     try {
       var r = await fetch(BASE_URL + '/api/dongle/devices/' + DEVICE + '/ota-from-url', {
         method: 'POST',
@@ -1164,17 +1202,51 @@
         body: JSON.stringify({ downloadUrl: fw.downloadUrl, deviceId: DEVICE })
       });
       if (!r.ok) throw new Error('HTTP ' + r.status);
-      setFwStatus('', 'Uploading to the strip…', true);
     } catch (e) {
       fw.updating = false;
+      stopFwTimers();
       hideFwProgress();
       setFwStatus('err', 'Failed to start update: ' + (e.message || e));
       updateFwButton();
+      return;
     }
+    // Ramp progress with time. Caps at 90; the version change bumps to 100.
+    stopFwTimers();
+    fwProgressTimer = setInterval(function() {
+      if (!fw.updating) { stopFwTimers(); return; }
+      var elapsed = Date.now() - fw.updateStartedMs;
+      var pct = Math.min(90, Math.round((elapsed / FW_EXPECTED_MS) * 90));
+      setFwProgress(pct, 'Uploading firmware…');
+    }, 300);
+    // Bail out if the strip never reboots into the new version.
+    fwWatchdogTimer = setTimeout(function() {
+      if (!fw.updating) return;
+      fw.updating = false;
+      stopFwTimers();
+      hideFwProgress();
+      setFwStatus('err', 'Update timed out — the strip did not report the new version.');
+      updateFwButton();
+    }, FW_TIMEOUT_MS);
   }
 
-  // Recheck / Update buttons
-  fwEl('rgb-fw-recheck').addEventListener('click', function() { checkFirmware(); });
+  function fwOnVersionArrived(newVersion) {
+    // Called from render() whenever rgb.version changes. If we're waiting
+    // for the flash to complete AND the version has landed on the target,
+    // finish the progress and re-check.
+    if (!fw.updating || !fw.pendingTarget) return;
+    if (newVersion !== fw.pendingTarget) return;
+    stopFwTimers();
+    setFwProgress(100, 'Complete');
+    setFwStatus('ok', 'Firmware updated to v' + newVersion + '.');
+    fw.updating = false;
+    fw.pendingTarget = null;
+    setTimeout(function() {
+      hideFwProgress();
+      updateFwButton();
+      checkFirmware();
+    }, 2500);
+  }
+
   fwEl('rgb-fw-update').addEventListener('click', function() { startFirmwareUpdate(); });
 
   // Live OTA progress from the dongle service. Broadcasts are shared across
@@ -1183,11 +1255,11 @@
   if (window.ncSender && typeof window.ncSender.onServerEvent === 'function') {
     window.ncSender.onServerEvent('plugin-ota:progress', function(d) {
       if (isOursOta(d) && typeof d.percent === 'number' && fw.updating) {
-        setFwProgress(d.percent, 'Flashing');
+        setFwProgress(d.percent, 'Uploading firmware…');
       }
     });
     window.ncSender.onServerEvent('plugin-ota:message', function(d) {
-      if (isOursOta(d) && d.message && fw.updating) setFwStatus(d.type === 'error' ? 'err' : '', d.message, d.type !== 'error');
+      if (isOursOta(d) && d.message && fw.updating) setFwStatus(d.type === 'error' ? 'err' : 'muted', d.message, d.type !== 'error');
     });
     window.ncSender.onServerEvent('plugin-ota:error', function(d) {
       if (!isOursOta(d)) return;
