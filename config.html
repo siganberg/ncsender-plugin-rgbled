@@ -38,6 +38,9 @@
       var(--color-surface-muted) 100%);
   }
   .rgb-sidebar-header {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
     padding: 20px 20px 16px;
     border-bottom: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
   }
@@ -265,6 +268,188 @@
   }
   .rgb-num-input:focus { outline: 2px solid var(--color-accent, #4a90e2); outline-offset: 1px; }
   .rgb-num-input:disabled { opacity: 0.5; cursor: not-allowed; }
+  /* iOS-style toggle */
+  .rgb-switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+  .rgb-switch input { opacity: 0; width: 0; height: 0; }
+  .rgb-switch-slider {
+    position: absolute; cursor: pointer; inset: 0; border-radius: 22px;
+    background: var(--color-border, #4b5563); transition: background 0.15s;
+  }
+  .rgb-switch-slider::before {
+    content: ''; position: absolute; height: 18px; width: 18px; left: 2px; top: 2px;
+    background: #fff; border-radius: 50%; transition: transform 0.15s;
+  }
+  .rgb-switch input:checked + .rgb-switch-slider { background: var(--color-accent, #4a90e2); }
+  .rgb-switch input:checked + .rgb-switch-slider::before { transform: translateX(18px); }
+  .rgb-switch input:disabled + .rgb-switch-slider { opacity: 0.5; cursor: not-allowed; }
+  /* Card structure — small caps title, optional header with an action */
+  .rgb-card-title {
+    font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--color-text-secondary, #94a3b8);
+    padding-bottom: 4px;
+  }
+  .rgb-card-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px; padding-bottom: 4px;
+  }
+  .rgb-card-header .rgb-card-title { padding-bottom: 0; }
+  .rgb-link-btn {
+    -webkit-appearance: none; appearance: none;
+    padding: 0; margin: 0; border: 0; background: transparent;
+    color: var(--color-text-secondary, #94a3b8);
+    font-family: inherit; font-size: 0.75rem; font-weight: 500;
+    cursor: pointer; text-decoration: none;
+    transition: color 0.12s;
+  }
+  .rgb-link-btn:hover:not(:disabled) { color: var(--color-accent, #4a90e2); text-decoration: underline; }
+  .rgb-link-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Per-state colour rows — two-column responsive grid, dot indicator,
+     ghost reset that only surfaces on hover so the row stays quiet. */
+  .rgb-color-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 4px 12px;
+  }
+  .rgb-color-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 8px;
+    transition: background 0.12s;
+  }
+  .rgb-color-row:hover { background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+  .rgb-color-label {
+    flex: 1; min-width: 0;
+    font-size: 0.86rem; color: var(--color-text-primary, #e5e7eb);
+    text-transform: capitalize;
+    letter-spacing: 0.01em;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .rgb-color-picker {
+    -webkit-appearance: none; appearance: none;
+    flex-shrink: 0;
+    width: 36px; height: 24px; padding: 0;
+    border: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
+    border-radius: 6px; background: transparent; cursor: pointer;
+    transition: border-color 0.12s, box-shadow 0.12s;
+  }
+  .rgb-color-picker:hover:not(:disabled) {
+    border-color: var(--color-accent, #4a90e2);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 15%, transparent);
+  }
+  .rgb-color-picker::-webkit-color-swatch-wrapper { padding: 2px; }
+  .rgb-color-picker::-webkit-color-swatch { border: 0; border-radius: 4px; }
+  .rgb-color-picker::-moz-color-swatch { border: 0; border-radius: 4px; }
+  .rgb-color-picker:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Reset — small pill-shaped text button. Always visible and legible
+     so it's obvious what it does; muted by default, accent border on
+     hover. Plain text beats an icon glyph here — no fallback issues
+     when a browser can't render the SVG or the currentColor path. */
+  .rgb-color-reset {
+    -webkit-appearance: none; appearance: none;
+    flex-shrink: 0;
+    padding: 3px 10px;
+    font-family: inherit;
+    font-size: 0.72rem; font-weight: 500;
+    letter-spacing: 0.03em;
+    color: var(--color-text-secondary, #94a3b8);
+    background: transparent;
+    border: 1px solid var(--color-border, #4b5563);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 0.12s, border-color 0.12s, background 0.12s;
+  }
+  .rgb-color-reset:hover:not(:disabled) {
+    color: var(--color-accent, #4a90e2);
+    border-color: var(--color-accent, #4a90e2);
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  }
+  .rgb-color-reset:disabled { opacity: 0.35; cursor: not-allowed; }
+  .rgb-panel-actions { display: flex; gap: 8px; }
+
+  /* -------- Firmware tab -------- */
+  .rgb-fw-row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 4px 0;
+    font-size: 0.86rem;
+  }
+  .rgb-fw-row + .rgb-fw-row { border-top: 1px dashed color-mix(in srgb, var(--color-border) 30%, transparent); }
+  .rgb-fw-row-label { color: var(--color-text-secondary, #94a3b8); font-size: 0.78rem; letter-spacing: 0.02em; }
+  .rgb-fw-row-value {
+    color: var(--color-text-primary, #e5e7eb);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+  .rgb-fw-row-value--muted { color: var(--color-text-secondary, #94a3b8); font-weight: 400; }
+  .rgb-fw-row-value--ok { color: #22c55e; }
+  .rgb-fw-row-value--warn { color: #f59e0b; }
+  .rgb-fw-status {
+    padding: 8px 12px; margin-top: 4px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--color-border) 20%, transparent);
+    font-size: 0.84rem; color: var(--color-text-secondary, #94a3b8);
+    transition: color 0.15s, background 0.15s;
+  }
+  .rgb-fw-status--ok   { background: color-mix(in srgb, #22c55e 12%, transparent); color: #86efac; }
+  .rgb-fw-status--warn { background: color-mix(in srgb, #f59e0b 12%, transparent); color: #fcd34d; }
+  .rgb-fw-status--err  { background: color-mix(in srgb, #ef4444 12%, transparent); color: #fca5a5; }
+  .rgb-fw-status--busy::before {
+    content: ''; display: inline-block; width: 10px; height: 10px; margin-right: 8px;
+    border-radius: 50%; border: 2px solid currentColor; border-top-color: transparent;
+    vertical-align: middle;
+    animation: rgb-fw-spin 0.8s linear infinite;
+  }
+  @keyframes rgb-fw-spin { to { transform: rotate(360deg); } }
+
+  .rgb-fw-progress {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 4px 0 2px;
+  }
+  .rgb-fw-progress-track {
+    position: relative;
+    height: 10px; border-radius: 999px;
+    background: color-mix(in srgb, var(--color-border) 45%, transparent);
+    overflow: hidden;
+  }
+  .rgb-fw-progress-fill {
+    height: 100%; width: 0%;
+    border-radius: inherit;
+    background: linear-gradient(90deg,
+      var(--color-accent, #4a90e2) 0%,
+      color-mix(in srgb, var(--color-accent, #4a90e2) 60%, #22c55e) 100%);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent, #4a90e2) 55%, transparent);
+    transition: width 0.35s cubic-bezier(0.16, 0.84, 0.44, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  /* Shimmer stripes across the fill for a lively "working" feel. */
+  .rgb-fw-progress-fill::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(-60deg,
+      rgba(255,255,255,0.14) 0 12px,
+      transparent 12px 24px);
+    animation: rgb-fw-shimmer 0.9s linear infinite;
+  }
+  @keyframes rgb-fw-shimmer { to { transform: translateX(24px); } }
+  .rgb-fw-progress-label {
+    align-self: flex-end;
+    font-size: 0.74rem; font-variant-numeric: tabular-nums;
+    color: var(--color-text-secondary, #94a3b8);
+  }
+
+  .rgb-fw-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
+  .rgb-btn--primary {
+    background: var(--color-accent, #4a90e2) !important;
+    border-color: var(--color-accent, #4a90e2) !important;
+    color: #fff !important;
+  }
+  .rgb-btn--primary:hover:not(:disabled) {
+    filter: brightness(1.08);
+    background: var(--color-accent, #4a90e2) !important;
+    color: #fff !important;
+  }
+  .rgb-btn--primary:disabled { opacity: 0.4; }
   .rgb-btn {
     -webkit-appearance: none; appearance: none;
     padding: 8px 14px;
@@ -400,6 +585,11 @@
 
         <div class="rgb-controls">
           <div class="rgb-controls-row">
+            <span class="rgb-controls-label">LED count</span>
+            <input type="number" min="1" max="300" step="1" value="29" class="rgb-num-input" id="rgb-count" title="Number of addressable LEDs on the strip. Change if you shortened or extended the reel.">
+            <span class="rgb-slider-value" id="rgb-countValue">29</span>
+          </div>
+          <div class="rgb-controls-row">
             <span class="rgb-controls-label">Brightness</span>
             <input type="range" min="1" max="255" value="255" class="rgb-slider" id="rgb-brightness">
             <span class="rgb-slider-value" id="rgb-brightnessValue">255</span>
@@ -422,19 +612,33 @@
       <header class="rgb-panel-header">
         <div class="rgb-panel-title-row">
           <h2 class="rgb-panel-title">Colors</h2>
-          <p class="rgb-panel-sub">Customize the color for each machine state.</p>
+          <p class="rgb-panel-sub">Customize the color for each machine state, plus optional overlays.</p>
         </div>
       </header>
       <div class="rgb-panel">
-        <div class="rgb-callout">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          <div>
-            <b>Coming soon.</b> Per-state color and animation customization needs a firmware update that adds a palette override command. Until then, colors are baked into the LED controller — see the RGB LED protocol docs for what each state looks like.
+        <!-- Overlays / shows card -->
+        <div class="rgb-controls">
+          <div class="rgb-card-title">Overlays &amp; Shows</div>
+          <div class="rgb-controls-row">
+            <span class="rgb-controls-label" style="flex:1">X-axis follower</span>
+            <label class="rgb-switch">
+              <input type="checkbox" id="rgb-xfollow">
+              <span class="rgb-switch-slider"></span>
+            </label>
           </div>
+          <div class="rgb-controls-row">
+            <span class="rgb-controls-label" style="flex:1">Job Completion</span>
+            <select id="rgb-cshow" class="rgb-num-input" style="width:auto; min-width:180px; text-align:left"></select>
+          </div>
+        </div>
+
+        <!-- State colours card -->
+        <div class="rgb-controls">
+          <div class="rgb-card-header">
+            <span class="rgb-card-title">State Colors</span>
+            <button type="button" class="rgb-link-btn" id="rgb-resetAllColors">Restore defaults</button>
+          </div>
+          <div id="rgb-stateColorList" class="rgb-color-grid"></div>
         </div>
       </div>
     </section>
@@ -448,14 +652,28 @@
         </div>
       </header>
       <div class="rgb-panel">
-        <div class="rgb-callout">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          <div>
-            <b>Coming soon.</b> Wireless firmware updates from this dialog are on the roadmap. For now, flash via <code>tools/ota_push.py</code> in the RGB firmware repo.
+        <div class="rgb-controls">
+          <div class="rgb-card-header">
+            <span class="rgb-card-title">Version</span>
+            <button type="button" class="rgb-link-btn" id="rgb-fw-recheck">Recheck</button>
+          </div>
+          <div class="rgb-fw-row">
+            <span class="rgb-fw-row-label">Installed</span>
+            <span class="rgb-fw-row-value" id="rgb-fw-current">—</span>
+          </div>
+          <div class="rgb-fw-row">
+            <span class="rgb-fw-row-label">Latest</span>
+            <span class="rgb-fw-row-value" id="rgb-fw-latest">—</span>
+          </div>
+          <div class="rgb-fw-status" id="rgb-fw-status">Checking for updates…</div>
+          <div class="rgb-fw-progress" id="rgb-fw-progress" hidden>
+            <div class="rgb-fw-progress-track">
+              <div class="rgb-fw-progress-fill" id="rgb-fw-progressFill" style="width:0%"></div>
+            </div>
+            <span class="rgb-fw-progress-label" id="rgb-fw-progressLabel">0%</span>
+          </div>
+          <div class="rgb-fw-actions">
+            <button type="button" class="rgb-btn rgb-btn--primary" id="rgb-fw-update" disabled>Update</button>
           </div>
         </div>
       </div>
@@ -477,6 +695,9 @@
       var target = btn.getAttribute('data-view');
       btns.forEach(function(b) { b.classList.toggle('active', b === btn); });
       panels.forEach(function(p) { p.classList.toggle('active', p.getAttribute('data-view') === target); });
+      // Firmware tab: re-check when the user opens it, unless a flash is
+      // in flight (would clobber the progress state).
+      if (target === 'firmware' && !fw.updating) checkFirmware();
     });
   });
 
@@ -486,7 +707,7 @@
   });
 
   // Device state
-  var rgb = { known: false, connected: false, lastSeenMs: -1, state: '', show: '', version: '', brightness: 255, idleMin: 0 };
+  var rgb = { known: false, connected: false, lastSeenMs: -1, state: '', show: '', version: '', brightness: 255, idleMin: 0, count: 29, completionShow: 1 };
 
   function parseHeartbeat(payload) {
     if (!payload || typeof payload !== 'string') return;
@@ -500,7 +721,9 @@
       else if (k === 'show') rgb.show = v;
       else if (k === 'v') rgb.version = v;
       else if (k === 'b') { var n = parseInt(v, 10); if (isFinite(n)) rgb.brightness = n; }
+      else if (k === 'n') { var c = parseInt(v, 10); if (isFinite(c)) rgb.count = c; }
       else if (k === 'idle') { var m = parseInt(v, 10); if (isFinite(m)) rgb.idleMin = m; }
+      else if (k === 'cshow') { var cs = parseInt(v, 10); if (isFinite(cs)) rgb.completionShow = cs; }
     }
   }
 
@@ -538,12 +761,36 @@
       idle.value = String(rgb.idleMin);
       idleValue.textContent = rgb.idleMin > 0 ? (rgb.idleMin + ' min') : 'off';
     }
+    var count = document.getElementById('rgb-count');
+    var countValue = document.getElementById('rgb-countValue');
+    if (document.activeElement !== count) {
+      count.value = String(rgb.count);
+      countValue.textContent = String(rgb.count);
+    }
+    var cshow = document.getElementById('rgb-cshow');
+    if (cshow && document.activeElement !== cshow) {
+      cshow.value = String(rgb.completionShow);
+    }
     var lock = !rgb.connected;
     slider.disabled = lock;
     idle.disabled = lock;
+    count.disabled = lock;
+    if (cshow) cshow.disabled = lock;
     document.getElementById('rgb-identifyBtn').disabled = lock;
 
     document.getElementById('rgb-pairBtn').style.display = rgb.known ? 'none' : '';
+
+    // Firmware tab mirrors the connection state and the strip's reported
+    // version. If we've been previously up-to-date and the strip just
+    // reported a fresher version, refresh the row + button state.
+    if (typeof fw !== 'undefined') {
+      if (rgb.version && rgb.version !== fw.current) {
+        fw.current = rgb.version;
+        if (fw.latest) fw.updateAvailable = isNewerVersion(fw.latest, fw.current);
+        showFwVersions(fw.current, fw.latest);
+      }
+      updateFwButton();
+    }
   }
 
   function send(payload) {
@@ -583,6 +830,19 @@
     rgb.brightness = v;
   });
 
+  // LED count
+  document.getElementById('rgb-count').addEventListener('input', function(e) {
+    var v = parseInt(e.target.value, 10);
+    if (!isFinite(v) || v < 1) v = 1;
+    document.getElementById('rgb-countValue').textContent = String(v);
+  });
+  document.getElementById('rgb-count').addEventListener('change', function(e) {
+    var v = parseInt(e.target.value, 10);
+    if (!isFinite(v) || v < 1) v = 1;
+    send('count ' + v);
+    rgb.count = v;
+  });
+
   // Idle-dim timeout
   document.getElementById('rgb-idle').addEventListener('input', function(e) {
     var v = parseInt(e.target.value, 10);
@@ -598,6 +858,143 @@
 
   // Identify
   document.getElementById('rgb-identifyBtn').addEventListener('click', function() { send('identify'); });
+
+  // ---- Colors tab ----------------------------------------------------------
+  // Machine states + firmware defaults. Order and hex values MUST track
+  // status_colors.h in the firmware — the strip resolves overrides by name.
+  // Only the machine states a user actually sees in the app header. Rare
+  // internal states (`homing-required`, `sleep`, `check`, `connecting`) and
+  // strip-side fallbacks (`offline`, `unknown`) are intentionally hidden.
+  // Job-complete gets its own control below (a light-show dropdown), so it
+  // isn't a per-state colour row.
+  var STATE_DEFAULTS = [
+    { name: 'idle',           hex: 'FFFFFF' },
+    { name: 'running',        hex: '00FF00' },
+    { name: 'jogging',        hex: '00FF00' },
+    { name: 'hold',           hex: 'FFC107' },
+    { name: 'alarm',          hex: 'FF0000' },
+    { name: 'door',           hex: 'FD7E14' },
+    { name: 'probing',        hex: '1ABC9C' },
+    { name: 'homing',         hex: '007BFF' },
+    { name: 'tool-changing',  hex: 'C912A8' }
+  ];
+
+  // Job-completion shows. IDs and order MUST match the CSHOW_* enum in
+  // firmware main.cpp — the strip resolves the picked show by numeric ID.
+  var COMPLETION_SHOWS = [
+    { id: 0, label: 'None (skip celebration)' },
+    { id: 1, label: 'Fireworks' },
+    { id: 2, label: 'Meteor Shower' },
+    { id: 3, label: 'Pulse' },
+    { id: 4, label: 'Strobe' },
+    { id: 5, label: 'Wave' }
+  ];
+
+  // Per-device localStorage — the strip owns the truth in NVS but there is
+  // no cheap read-back yet, so we keep a mirror here to populate the UI on
+  // reload. Keyed by dongle device id (constant "rgbled") so switching
+  // machines picks up their own overrides.
+  var LS_KEY = 'rgbled.colors.v1';
+  function loadOverrides() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {}; }
+    catch (_) { return {}; }
+  }
+  function saveOverrides(map) {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(map)); } catch (_) {}
+  }
+
+  var overrides = loadOverrides();
+
+  function labelFor(name) {
+    // Turn "tool-changing" into "Tool changing" for the row label — the
+    // hyphenated forms read as identifiers otherwise.
+    return name.replace(/-/g, ' ');
+  }
+  function buildColorRows() {
+    var host = document.getElementById('rgb-stateColorList');
+    if (!host) return;
+    host.innerHTML = '';
+    STATE_DEFAULTS.forEach(function(s) {
+      var current = overrides[s.name] || s.hex;
+      var row = document.createElement('div');
+      row.className = 'rgb-color-row';
+      row.innerHTML =
+        '<span class="rgb-color-label">' + labelFor(s.name) + '</span>' +
+        '<button type="button" class="rgb-color-reset" data-state="' + s.name + '" title="Restore default">Reset</button>' +
+        '<input type="color" class="rgb-color-picker" data-state="' + s.name + '" value="#' + current + '">';
+      host.appendChild(row);
+    });
+
+    // Wire pickers
+    host.querySelectorAll('.rgb-color-picker').forEach(function(pick) {
+      pick.addEventListener('input', function(e) {
+        var hex = e.target.value.replace('#', '').toUpperCase();
+        send('preview ' + hex);
+      });
+      pick.addEventListener('change', function(e) {
+        var state = e.target.getAttribute('data-state');
+        var hex = e.target.value.replace('#', '').toUpperCase();
+        send('color ' + state + ' ' + hex);
+        overrides[state] = hex;
+        saveOverrides(overrides);
+      });
+    });
+
+    // Wire reset buttons — use currentTarget so a click on the SVG child
+    // still finds the button's data-state attribute.
+    host.querySelectorAll('.rgb-color-reset').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        var state = e.currentTarget.getAttribute('data-state');
+        send('color ' + state + ' reset');
+        delete overrides[state];
+        saveOverrides(overrides);
+        var def = STATE_DEFAULTS.find(function(s) { return s.name === state; });
+        if (def) {
+          var pick = host.querySelector('.rgb-color-picker[data-state="' + state + '"]');
+          if (pick) pick.value = '#' + def.hex;
+        }
+      });
+    });
+  }
+  buildColorRows();
+
+  // Global "restore all defaults"
+  document.getElementById('rgb-resetAllColors').addEventListener('click', function() {
+    send('color reset');
+    overrides = {};
+    saveOverrides(overrides);
+    buildColorRows();
+  });
+
+  // X-axis follower toggle. xMax is auto-synced from the machine's $130
+  // via the DRO E: field, so there's no manual mm input to wire here.
+  document.getElementById('rgb-xfollow').addEventListener('change', function(e) {
+    var on = !!e.target.checked;
+    send('follow ' + (on ? 'on' : 'off'));
+    try { localStorage.setItem('rgbled.xfollow', on ? '1' : '0'); } catch (_) {}
+  });
+  try {
+    var savedOn = localStorage.getItem('rgbled.xfollow') === '1';
+    document.getElementById('rgb-xfollow').checked = savedOn;
+  } catch (_) {}
+
+  // Job Completion dropdown
+  var cshowSelect = document.getElementById('rgb-cshow');
+  COMPLETION_SHOWS.forEach(function(s) {
+    var opt = document.createElement('option');
+    opt.value = String(s.id);
+    opt.textContent = s.label;
+    cshowSelect.appendChild(opt);
+  });
+  cshowSelect.addEventListener('change', function(e) {
+    var id = parseInt(e.target.value, 10);
+    if (!isFinite(id)) id = 1;
+    send('cshow ' + id);
+    rgb.completionShow = id;
+    // Fire the show immediately so the user sees it on selection.
+    // Skips 'None' — nothing to preview there.
+    if (id !== 0) send('party ' + id);
+  });
 
   // Pair
   document.getElementById('rgb-pairBtn').addEventListener('click', function() {
@@ -645,6 +1042,179 @@
   }
   window.addEventListener('pagehide', stop);
 
+  // ---- Firmware tab -------------------------------------------------------
+  // Releases live in the public repo; assets are named per the CI recipe
+  // in .github/workflows/release-build.yml. Keep in sync if either changes.
+  var FW_RELEASES_REPO = 'siganberg/ncSender.rgb.releases';
+  var FW_ASSET_NAME = function(tag) { return 'firmware_rgb_v' + tag + '.bin'; };
+
+  var fw = {
+    checking: false,
+    updating: false,
+    current: '',
+    latest: '',
+    downloadUrl: '',
+    updateAvailable: false
+  };
+
+  function fwEl(id) { return document.getElementById(id); }
+
+  function setFwStatus(kind, msg, busy) {
+    var el = fwEl('rgb-fw-status'); if (!el) return;
+    el.className = 'rgb-fw-status' + (kind ? ' rgb-fw-status--' + kind : '') + (busy ? ' rgb-fw-status--busy' : '');
+    el.textContent = msg || '';
+  }
+  function setFwProgress(pct, label) {
+    var box = fwEl('rgb-fw-progress'); if (!box) return;
+    box.hidden = false;
+    var clamped = Math.max(0, Math.min(100, Math.round(pct)));
+    fwEl('rgb-fw-progressFill').style.width = clamped + '%';
+    fwEl('rgb-fw-progressLabel').textContent = (label ? label + ' — ' : '') + clamped + '%';
+  }
+  function hideFwProgress() { var box = fwEl('rgb-fw-progress'); if (box) box.hidden = true; }
+  function showFwVersions(current, latest) {
+    var cur = fwEl('rgb-fw-current');
+    var lat = fwEl('rgb-fw-latest');
+    if (cur) {
+      cur.textContent = current ? 'v' + current : '—';
+      cur.classList.toggle('rgb-fw-row-value--muted', !current);
+    }
+    if (lat) {
+      lat.textContent = latest ? 'v' + latest : '—';
+      lat.classList.toggle('rgb-fw-row-value--muted', !latest);
+      lat.classList.toggle('rgb-fw-row-value--ok', !!(latest && current && !isNewerVersion(latest, current)));
+      lat.classList.toggle('rgb-fw-row-value--warn', !!(latest && current && isNewerVersion(latest, current)));
+    }
+  }
+  function updateFwButton() {
+    var btn = fwEl('rgb-fw-update'); if (!btn) return;
+    var canUpdate = fw.updateAvailable && !fw.updating && !fw.checking && rgb.connected && !!fw.downloadUrl;
+    btn.disabled = !canUpdate;
+    btn.title = canUpdate
+      ? 'Flash v' + fw.latest + ' wirelessly'
+      : (fw.updating ? 'Update in progress' : (fw.updateAvailable ? 'Not connected' : 'Up to date'));
+  }
+  function isNewerVersion(latest, current) {
+    if (!latest) return false;
+    if (!current) return true;
+    var a = latest.split('.').map(Number), b = current.split('.').map(Number);
+    for (var i = 0; i < 3; i++) {
+      var da = a[i] || 0, db = b[i] || 0;
+      if (da > db) return true;
+      if (da < db) return false;
+    }
+    return false;
+  }
+
+  async function fetchLatestRelease() {
+    var url = 'https://api.github.com/repos/' + FW_RELEASES_REPO + '/releases/latest';
+    var r = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } });
+    if (!r.ok) return null;
+    var release = await r.json();
+    var tag = (release.tag_name || '').replace(/^v/, '');
+    var wantedName = FW_ASSET_NAME(tag).toLowerCase();
+    var asset = (release.assets || []).find(function(a) { return (a.name || '').toLowerCase() === wantedName; });
+    return { latest: tag, downloadUrl: asset ? asset.browser_download_url : '' };
+  }
+
+  async function checkFirmware() {
+    if (fw.checking || fw.updating) return;
+    fw.checking = true;
+    fw.current = rgb.version || fw.current;
+    showFwVersions(fw.current, '');
+    setFwStatus('', 'Checking for updates…', true);
+    updateFwButton();
+    try {
+      var release = await fetchLatestRelease();
+      if (!release || !release.latest) {
+        setFwStatus('err', 'Could not reach the release feed.');
+        fw.updateAvailable = false;
+      } else {
+        fw.latest = release.latest;
+        fw.downloadUrl = release.downloadUrl;
+        fw.updateAvailable = !!(fw.current && isNewerVersion(fw.latest, fw.current));
+        showFwVersions(fw.current, fw.latest);
+        if (!fw.current) {
+          setFwStatus('', 'Waiting for the RGB LED controller to report its version…');
+        } else if (fw.updateAvailable) {
+          setFwStatus('warn', 'Update available: v' + fw.latest);
+        } else {
+          setFwStatus('ok', 'Firmware is up to date.');
+        }
+      }
+    } catch (_) {
+      setFwStatus('err', 'Could not reach the release feed.');
+      fw.updateAvailable = false;
+    } finally {
+      fw.checking = false;
+      updateFwButton();
+    }
+  }
+
+  async function startFirmwareUpdate() {
+    if (fw.updating || !fw.updateAvailable || !fw.downloadUrl) return;
+    fw.updating = true;
+    updateFwButton();
+    setFwStatus('', 'Downloading v' + fw.latest + '…', true);
+    setFwProgress(0, 'Downloading');
+    try {
+      var r = await fetch(BASE_URL + '/api/dongle/devices/' + DEVICE + '/ota-from-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ downloadUrl: fw.downloadUrl, deviceId: DEVICE })
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      setFwStatus('', 'Uploading to the strip…', true);
+    } catch (e) {
+      fw.updating = false;
+      hideFwProgress();
+      setFwStatus('err', 'Failed to start update: ' + (e.message || e));
+      updateFwButton();
+    }
+  }
+
+  // Recheck / Update buttons
+  fwEl('rgb-fw-recheck').addEventListener('click', function() { checkFirmware(); });
+  fwEl('rgb-fw-update').addEventListener('click', function() { startFirmwareUpdate(); });
+
+  // Live OTA progress from the dongle service. Broadcasts are shared across
+  // devices, so filter on `device === 'rgbled'` before touching UI.
+  function isOursOta(d) { return d && (d.device === DEVICE || d.deviceId === DEVICE); }
+  if (window.ncSender && typeof window.ncSender.onServerEvent === 'function') {
+    window.ncSender.onServerEvent('plugin-ota:progress', function(d) {
+      if (isOursOta(d) && typeof d.percent === 'number' && fw.updating) {
+        setFwProgress(d.percent, 'Flashing');
+      }
+    });
+    window.ncSender.onServerEvent('plugin-ota:message', function(d) {
+      if (isOursOta(d) && d.message && fw.updating) setFwStatus(d.type === 'error' ? 'err' : '', d.message, d.type !== 'error');
+    });
+    window.ncSender.onServerEvent('plugin-ota:error', function(d) {
+      if (!isOursOta(d)) return;
+      fw.updating = false;
+      hideFwProgress();
+      setFwStatus('err', (d && d.message) || 'Firmware update failed.');
+      updateFwButton();
+    });
+    window.ncSender.onServerEvent('plugin-ota:done', function(d) {
+      if (!isOursOta(d)) return;
+      setFwProgress(100, 'Done');
+      setFwStatus('ok', 'Update finished. Strip is rebooting…');
+      setTimeout(function() {
+        fw.updating = false;
+        hideFwProgress();
+        updateFwButton();
+        // Give the strip a moment to reboot, then re-check to reflect the
+        // new installed version.
+        setTimeout(checkFirmware, 3000);
+      }, 6000);
+    });
+  }
+
   start();
+  // Kick a firmware check once the strip has reported its version. If the
+  // page opens on Wireless (default) we're not on Firmware tab yet, but a
+  // background check populates fw.current so switching tabs is instant.
+  checkFirmware();
 })();
 </script>
