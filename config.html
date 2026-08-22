@@ -251,6 +251,20 @@
     font-size: 0.88rem;
     color: var(--color-text-secondary, #94a3b8);
   }
+  .rgb-num-input {
+    -webkit-appearance: none; appearance: none;
+    padding: 6px 8px;
+    border: 1px solid var(--color-border, #4b5563);
+    border-radius: 6px;
+    background: var(--color-surface-muted, #1f2937);
+    color: var(--color-text-primary, #e5e7eb);
+    font-size: 0.88rem;
+    font-variant-numeric: tabular-nums;
+    width: 80px;
+    text-align: right;
+  }
+  .rgb-num-input:focus { outline: 2px solid var(--color-accent, #4a90e2); outline-offset: 1px; }
+  .rgb-num-input:disabled { opacity: 0.5; cursor: not-allowed; }
   .rgb-btn {
     -webkit-appearance: none; appearance: none;
     padding: 8px 14px;
@@ -391,6 +405,11 @@
             <span class="rgb-slider-value" id="rgb-brightnessValue">255</span>
           </div>
           <div class="rgb-controls-row">
+            <span class="rgb-controls-label">Idle dim (min)</span>
+            <input type="number" min="0" max="1440" step="1" value="0" class="rgb-num-input" id="rgb-idle" title="Minutes without a machine-state change before the strip dims. 0 = off. Wakes on the next state change.">
+            <span class="rgb-slider-value" id="rgb-idleValue">off</span>
+          </div>
+          <div class="rgb-controls-row">
             <span class="rgb-controls-label">Test</span>
             <button type="button" class="rgb-btn" id="rgb-identifyBtn">Identify — flash the strip</button>
           </div>
@@ -467,7 +486,7 @@
   });
 
   // Device state
-  var rgb = { known: false, connected: false, lastSeenMs: -1, state: '', show: '', version: '', brightness: 255 };
+  var rgb = { known: false, connected: false, lastSeenMs: -1, state: '', show: '', version: '', brightness: 255, idleMin: 0 };
 
   function parseHeartbeat(payload) {
     if (!payload || typeof payload !== 'string') return;
@@ -481,6 +500,7 @@
       else if (k === 'show') rgb.show = v;
       else if (k === 'v') rgb.version = v;
       else if (k === 'b') { var n = parseInt(v, 10); if (isFinite(n)) rgb.brightness = n; }
+      else if (k === 'idle') { var m = parseInt(v, 10); if (isFinite(m)) rgb.idleMin = m; }
     }
   }
 
@@ -512,8 +532,15 @@
       slider.value = String(rgb.brightness);
       svalue.textContent = String(rgb.brightness);
     }
+    var idle = document.getElementById('rgb-idle');
+    var idleValue = document.getElementById('rgb-idleValue');
+    if (document.activeElement !== idle) {
+      idle.value = String(rgb.idleMin);
+      idleValue.textContent = rgb.idleMin > 0 ? (rgb.idleMin + ' min') : 'off';
+    }
     var lock = !rgb.connected;
     slider.disabled = lock;
+    idle.disabled = lock;
     document.getElementById('rgb-identifyBtn').disabled = lock;
 
     document.getElementById('rgb-pairBtn').style.display = rgb.known ? 'none' : '';
@@ -554,6 +581,19 @@
     var v = parseInt(e.target.value, 10);
     send('brightness ' + v);
     rgb.brightness = v;
+  });
+
+  // Idle-dim timeout
+  document.getElementById('rgb-idle').addEventListener('input', function(e) {
+    var v = parseInt(e.target.value, 10);
+    if (!isFinite(v) || v < 0) v = 0;
+    document.getElementById('rgb-idleValue').textContent = v > 0 ? (v + ' min') : 'off';
+  });
+  document.getElementById('rgb-idle').addEventListener('change', function(e) {
+    var v = parseInt(e.target.value, 10);
+    if (!isFinite(v) || v < 0) v = 0;
+    send('idle ' + v);
+    rgb.idleMin = v;
   });
 
   // Identify
