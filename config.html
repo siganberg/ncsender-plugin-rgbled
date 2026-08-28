@@ -422,8 +422,37 @@
     border-color: var(--color-accent, #4a90e2);
     color: #fff;
   }
-  .rgb-fw-action-btn--primary:hover:not(:disabled) { filter: brightness(1.08); }
+  .rgb-fw-action-btn--primary:hover:not(:disabled):not(.is-disabled) { filter: brightness(1.08); }
   .rgb-fw-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* The Update button is always visible; when there is nothing to install it
+     renders "disabled" via a class rather than the `disabled` attribute, so it
+     still receives pointer events — a 1 s press-and-hold opens the file picker
+     for a forced flash (downgrades, re-flashing the same build). */
+  .rgb-fw-action-btn {
+    position: relative;
+    overflow: hidden;
+    -webkit-user-select: none; user-select: none;
+    -webkit-touch-callout: none;
+  }
+  .rgb-fw-action-btn.is-disabled { opacity: 0.5; cursor: not-allowed; }
+  .rgb-fw-hold-fill {
+    position: absolute; inset: 0 auto 0 0;
+    width: 0;
+    background: rgba(255,255,255,0.35);
+    pointer-events: none;
+    transition: none;
+  }
+  .rgb-fw-action-btn.is-holding .rgb-fw-hold-fill {
+    width: 100%;
+    transition: width 1s linear;
+  }
+  .rgb-fw-update-label { position: relative; z-index: 1; }
+  .rgb-fw-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary, #94a3b8);
+    opacity: 0.8;
+  }
 
   .rgb-fw-progress {
     margin-top: 12px;
@@ -434,7 +463,7 @@
   .rgb-fw-progress-bar {
     height: 100%; width: 0%;
     background: var(--color-accent, #4a90e2);
-    transition: width 0.25s ease;
+    transition: width 0.25s linear;
   }
   .rgb-fw-progress-label {
     display: flex; justify-content: space-between;
@@ -671,11 +700,14 @@
                 <span>Checking for updates…</span>
               </div>
               <div class="rgb-fw-actions">
-                <button type="button" id="rgb-fw-update" class="rgb-fw-action-btn rgb-fw-action-btn--primary" style="display:none">
+                <button type="button" id="rgb-fw-update" class="rgb-fw-action-btn rgb-fw-action-btn--primary">
+                  <span class="rgb-fw-hold-fill" aria-hidden="true"></span>
                   <span class="rgb-fw-update-label">Update Firmware</span>
                 </button>
+                <input type="file" id="rgb-fw-file" accept=".bin" style="display:none">
               </div>
             </div>
+            <div class="rgb-fw-hint" id="rgb-fw-hint">Press and hold Update for 1 second to flash a .bin file (for downgrades or re-flashing).</div>
             <div id="rgb-fw-progress-wrap" style="display:none">
               <div class="rgb-fw-progress">
                 <div id="rgb-fw-progress-bar" class="rgb-fw-progress-bar"></div>
@@ -1069,6 +1101,7 @@
   var fw = {
     checking: false,
     updating: false,
+    fromFile: false,
     current: '',
     latest: '',
     downloadUrl: '',
@@ -1085,16 +1118,78 @@
     inner += '<span>' + (msg || '') + '</span>';
     el.innerHTML = inner;
   }
+  // ---- Progress bar ------------------------------------------------------
+  // Two things can move the bar: real plugin-ota:* progress events, and a
+  // time-based ramp that stands in when they don't arrive (this UI gets the
+  // window.ncSender bridge when opened from the Tools menu, but not in the
+  // Plugins tab's srcdoc iframe). Real events win — the first one freezes the
+  // ramp where it is and drives from there. Stepping the
+  // width every tick against a 0.25 s ease transition made the bar stutter and
+  // jump; instead the ramp is ONE long linear transition the browser
+  // interpolates, and the % label is read back off the rendered width so the
+  // number always matches the bar. Motion is strictly monotonic — a late or
+  // lower value is dropped rather than snapping the bar backwards.
+  var fwPct = 0;
+
+  // Rendered width as a percentage, or null when it can't be measured (the
+  // Firmware tab is hidden) — callers must not act on a bogus 0 there.
+  function fwBarPct() {
+    var bar = fwEl('rgb-fw-progress-bar'); if (!bar) return null;
+    var track = bar.parentElement; if (!track) return null;
+    var tw = track.getBoundingClientRect().width;
+    if (!tw) return null;
+    return Math.max(0, Math.min(100, (bar.getBoundingClientRect().width / tw) * 100));
+  }
+  function syncFwPctLabel() {
+    var at = fwBarPct(); if (at === null) return;
+    var el = fwEl('rgb-fw-progress-pct');
+    if (el) el.textContent = Math.round(at) + '%';
+  }
+  // Pin the bar at the width it is actually rendering right now, so the next
+  // transition starts from there instead of jumping.
+  function freezeFwBar() {
+    var bar = fwEl('rgb-fw-progress-bar'); if (!bar) return;
+    var at = fwBarPct(); if (at === null) return;
+    bar.style.transition = 'none';
+    bar.style.width = at + '%';
+    void bar.offsetWidth;
+  }
+  function beginFwProgress(msg) {
+    var wrap = fwEl('rgb-fw-progress-wrap'); if (!wrap) return;
+    wrap.style.display = '';
+    fwPct = 0;
+    var bar = fwEl('rgb-fw-progress-bar');
+    if (bar) { bar.style.transition = 'none'; bar.style.width = '0%'; void bar.offsetWidth; }
+    fwEl('rgb-fw-progress-msg').textContent = msg || '';
+    fwEl('rgb-fw-progress-pct').textContent = '0%';
+  }
+  // Glide to `pct` over `durationMs` in one continuous transition.
+  function rampFwProgress(pct, durationMs, msg) {
+    var bar = fwEl('rgb-fw-progress-bar'); if (!bar) return;
+    if (pct <= fwPct) return;
+    freezeFwBar();
+    fwPct = pct;
+    bar.style.transition = 'width ' + durationMs + 'ms linear';
+    bar.style.width = pct + '%';
+    if (msg) fwEl('rgb-fw-progress-msg').textContent = msg;
+  }
   function setFwProgress(pct, msg) {
     var wrap = fwEl('rgb-fw-progress-wrap'); if (!wrap) return;
     wrap.style.display = '';
     var clamped = Math.max(0, Math.min(100, Math.round(pct)));
-    fwEl('rgb-fw-progress-bar').style.width = clamped + '%';
-    fwEl('rgb-fw-progress-msg').textContent = msg || '';
+    if (clamped < fwPct) return;
+    freezeFwBar();
+    fwPct = clamped;
+    var bar = fwEl('rgb-fw-progress-bar');
+    bar.style.transition = 'width 250ms linear';
+    bar.style.width = clamped + '%';
+    if (msg != null) fwEl('rgb-fw-progress-msg').textContent = msg;
     fwEl('rgb-fw-progress-pct').textContent = clamped + '%';
   }
   function hideFwProgress() {
+    stopFwLabelTicker();
     var wrap = fwEl('rgb-fw-progress-wrap'); if (wrap) wrap.style.display = 'none';
+    fwPct = 0;
   }
   function setFwLinkBadge(kind, label) {
     var badge = fwEl('rgb-fw-link'); if (!badge) return;
@@ -1102,14 +1197,24 @@
     var lbl = badge.querySelector('.rgb-fw-link-label');
     if (lbl) lbl.textContent = label;
   }
+  // The button stays on screen at all times (hidden only while a flash runs)
+  // so the press-and-hold "flash from file" affordance is always reachable.
+  // "Disabled" is a class, not the `disabled` attribute — a disabled <button>
+  // swallows pointer events and would kill the long-press.
   function updateFwButton() {
     var btn = fwEl('rgb-fw-update'); if (!btn) return;
     var canUpdate = fw.updateAvailable && !fw.updating && !fw.checking && rgb.connected && !!fw.downloadUrl;
-    btn.style.display = fw.updateAvailable && !fw.updating ? '' : 'none';
-    btn.disabled = !canUpdate;
-    btn.title = canUpdate
-      ? 'Flash v' + fw.latest + ' wirelessly'
-      : (fw.updating ? 'Update in progress' : 'Not connected');
+    // The button stays in the layout while flashing — hiding it made the row,
+    // and the progress bar below it, jump as the flash started and finished.
+    btn.classList.toggle('is-disabled', !canUpdate);
+    btn.setAttribute('aria-disabled', canUpdate ? 'false' : 'true');
+    var hold = ' — hold 1s to flash from a file';
+    btn.title = fw.updating ? 'Update in progress'
+      : canUpdate
+      ? 'Flash v' + fw.latest + ' wirelessly' + hold
+      : (fw.checking ? 'Checking for updates…' + hold
+        : !rgb.connected ? 'Not connected' + hold
+        : 'Already on the latest version' + hold);
     // Link badge mirrors connectivity like AutoDustBoot's license chip.
     if (!rgb.known) setFwLinkBadge('', 'Not paired');
     else if (!rgb.connected) setFwLinkBadge('warn', 'Offline');
@@ -1170,31 +1275,63 @@
     }
   }
 
-  // Plugin iframes don't get the `plugin-ota:*` WebSocket bridge from the
-  // parent app, so we can't rely on progress events for the bar. Drive
-  // the bar off wall-clock time up to 90 % during the flash window, then
-  // let the heartbeat's version change land us at 100 % and close out.
+  // Fallback pacing for when the `plugin-ota:*` bridge isn't available (see
+  // above). Drive the bar off wall-clock time up to 90 % during the flash
+  // window, then let the heartbeat's version change land us at 100 % and
+  // close out.
   // EXPECTED_MS is generous — 25 s covers the ~15 s a typical wireless
   // flash takes plus overhead; we'll snap to 100 the moment the strip
   // reboots and reports the new version.
   var FW_EXPECTED_MS = 25000;
   var FW_TIMEOUT_MS  = 90000;
-  var fwProgressTimer = null;
+  var fwLabelTimer = null;
   var fwWatchdogTimer = null;
 
+  function stopFwLabelTicker() {
+    if (fwLabelTimer) { clearInterval(fwLabelTimer); fwLabelTimer = null; }
+  }
   function stopFwTimers() {
-    if (fwProgressTimer) { clearInterval(fwProgressTimer); fwProgressTimer = null; }
+    stopFwLabelTicker();
     if (fwWatchdogTimer) { clearTimeout(fwWatchdogTimer); fwWatchdogTimer = null; }
+  }
+
+  // Ramp progress with time. Caps at 90; the version change bumps to 100.
+  // `timeoutMs`/`onTimeout` differ per transport: a release flash knows the
+  // exact target version and treats silence as failure, while a file flash may
+  // be re-installing the *same* version — nothing to detect — so it settles by
+  // re-reading whatever version the strip reports.
+  function startFwTimers(timeoutMs, onTimeout) {
+    stopFwTimers();
+    // One continuous glide to 90 % across the expected flash window. The last
+    // 10 % is held back for a real completion signal.
+    rampFwProgress(90, FW_EXPECTED_MS, 'Uploading firmware…');
+    fwLabelTimer = setInterval(syncFwPctLabel, 100);
+    fwWatchdogTimer = setTimeout(function() {
+      if (!fw.updating) return;
+      stopFwTimers();
+      onTimeout();
+    }, timeoutMs);
+  }
+
+  function failFwUpdate(msg) {
+    fw.updating = false;
+    fw.fromFile = false;
+    fw.pendingTarget = null;
+    stopFwTimers();
+    hideFwProgress();
+    setFwStatus('err', msg);
+    updateFwButton();
   }
 
   async function startFirmwareUpdate() {
     if (fw.updating || !fw.updateAvailable || !fw.downloadUrl) return;
     fw.updating = true;
+    fw.fromFile = false;
     fw.updateStartedMs = Date.now();
     fw.pendingTarget = fw.latest;
     updateFwButton();
     setFwStatus('muted', 'Uploading firmware to the strip…', true);
-    setFwProgress(0, 'Uploading firmware…');
+    beginFwProgress('Uploading firmware…');
     try {
       var r = await fetch(BASE_URL + '/api/dongle/devices/' + DEVICE + '/ota-from-url', {
         method: 'POST',
@@ -1203,30 +1340,74 @@
       });
       if (!r.ok) throw new Error('HTTP ' + r.status);
     } catch (e) {
-      fw.updating = false;
-      stopFwTimers();
-      hideFwProgress();
-      setFwStatus('err', 'Failed to start update: ' + (e.message || e));
-      updateFwButton();
+      failFwUpdate('Failed to start update: ' + (e.message || e));
       return;
     }
-    // Ramp progress with time. Caps at 90; the version change bumps to 100.
-    stopFwTimers();
-    fwProgressTimer = setInterval(function() {
-      if (!fw.updating) { stopFwTimers(); return; }
-      var elapsed = Date.now() - fw.updateStartedMs;
-      var pct = Math.min(90, Math.round((elapsed / FW_EXPECTED_MS) * 90));
-      setFwProgress(pct, 'Uploading firmware…');
-    }, 300);
     // Bail out if the strip never reboots into the new version.
-    fwWatchdogTimer = setTimeout(function() {
-      if (!fw.updating) return;
+    startFwTimers(FW_TIMEOUT_MS, function() {
       fw.updating = false;
-      stopFwTimers();
       hideFwProgress();
       setFwStatus('err', 'Update timed out — the strip did not report the new version.');
       updateFwButton();
-    }, FW_TIMEOUT_MS);
+    });
+  }
+
+  // Forced flash from a local .bin — reached by press-and-holding Update.
+  // Uses the multipart OTA endpoint, which accepts any build, so this is the
+  // downgrade / re-flash path.
+  var FW_FILE_SETTLE_MS = FW_EXPECTED_MS + 15000;
+
+  async function startFirmwareFileUpdate(file) {
+    if (fw.updating || !file) return;
+    if (!rgb.connected) {
+      setFwStatus('err', 'Not connected — the RGB LED controller must be online to flash.');
+      return;
+    }
+    // Release assets are named firmware_rgb_v<x.y.z>.bin. When the filename
+    // carries a version that differs from what's installed we can confirm the
+    // flash exactly, the same way the release path does.
+    var m = /(\d+\.\d+\.\d+)/.exec(file.name || '');
+    fw.updating = true;
+    fw.fromFile = true;
+    fw.updateStartedMs = Date.now();
+    fw.pendingTarget = (m && m[1] !== fw.current) ? m[1] : null;
+    updateFwButton();
+    setFwStatus('muted', 'Uploading ' + file.name + ' to the strip…', true);
+    beginFwProgress('Uploading firmware…');
+    try {
+      var form = new FormData();
+      form.append('file', file, file.name);
+      form.append('deviceId', DEVICE);
+      var r = await fetch(BASE_URL + '/api/dongle/devices/' + DEVICE + '/ota', {
+        method: 'POST',
+        body: form
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+    } catch (e) {
+      failFwUpdate('Failed to start flash: ' + (e.message || e));
+      return;
+    }
+    startFwTimers(fw.pendingTarget ? FW_TIMEOUT_MS : FW_FILE_SETTLE_MS, function() {
+      if (fw.pendingTarget) {
+        fw.updating = false;
+        fw.fromFile = false;
+        hideFwProgress();
+        setFwStatus('err', 'Flash timed out — the strip did not report v' + fw.pendingTarget + '.');
+        updateFwButton();
+        return;
+      }
+      // Same-version re-flash: no version change to wait for. Settle by
+      // re-reading whatever the strip now reports.
+      setFwProgress(100, 'Complete');
+      fw.updating = false;
+      fw.fromFile = false;
+      setFwStatus('muted', 'Flash finished — reading the controller version…', true);
+      setTimeout(function() {
+        hideFwProgress();
+        updateFwButton();
+        checkFirmware();
+      }, 1500);
+    });
   }
 
   function fwOnVersionArrived(newVersion) {
@@ -1237,8 +1418,9 @@
     if (newVersion !== fw.pendingTarget) return;
     stopFwTimers();
     setFwProgress(100, 'Complete');
-    setFwStatus('ok', 'Firmware updated to v' + newVersion + '.');
+    setFwStatus('ok', 'Firmware is now v' + newVersion + '.');
     fw.updating = false;
+    fw.fromFile = false;
     fw.pendingTarget = null;
     setTimeout(function() {
       hideFwProgress();
@@ -1247,7 +1429,58 @@
     }, 2500);
   }
 
-  fwEl('rgb-fw-update').addEventListener('click', function() { startFirmwareUpdate(); });
+  // ---- Update button: tap = install latest, hold 1s = flash from file ------
+  // Holding works even when the button reads as disabled (already up to date),
+  // which is the point: it's the downgrade / re-flash escape hatch.
+  (function wireFwButton() {
+    var btn = fwEl('rgb-fw-update');
+    var fileInput = fwEl('rgb-fw-file');
+    if (!btn || !fileInput) return;
+
+    var HOLD_MS = 1000;
+    var holdTimer = null;
+    var holdFired = false;
+
+    function endHold() {
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+      btn.classList.remove('is-holding');
+    }
+
+    btn.addEventListener('pointerdown', function(e) {
+      if (e.button != null && e.button !== 0) return;
+      if (fw.updating) return;
+      holdFired = false;
+      btn.classList.add('is-holding');
+      holdTimer = setTimeout(function() {
+        holdTimer = null;
+        holdFired = true;
+        btn.classList.remove('is-holding');
+        if (!rgb.connected) {
+          setFwStatus('err', 'Not connected — the RGB LED controller must be online to flash.');
+          return;
+        }
+        fileInput.value = '';
+        fileInput.click();
+      }, HOLD_MS);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function(ev) {
+      btn.addEventListener(ev, endHold);
+    });
+    // Long-press on touch would otherwise pop the OS callout/context menu.
+    btn.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
+    btn.addEventListener('click', function(e) {
+      if (holdFired) { holdFired = false; e.preventDefault(); return; }
+      if (btn.classList.contains('is-disabled')) return;
+      startFirmwareUpdate();
+    });
+
+    fileInput.addEventListener('change', function() {
+      var f = fileInput.files && fileInput.files[0];
+      fileInput.value = '';
+      if (f) startFirmwareFileUpdate(f);
+    });
+  })();
 
   // Live OTA progress from the dongle service. Broadcasts are shared across
   // devices, so filter on `device === 'rgbled'` before touching UI.
@@ -1263,7 +1496,10 @@
     });
     window.ncSender.onServerEvent('plugin-ota:error', function(d) {
       if (!isOursOta(d)) return;
+      stopFwTimers();
       fw.updating = false;
+      fw.fromFile = false;
+      fw.pendingTarget = null;
       hideFwProgress();
       setFwStatus('err', (d && d.message) || 'Firmware update failed.');
       updateFwButton();
