@@ -1,6 +1,7 @@
-Warning: no stdin data received in 3s, proceeding without it. If piping from a slow command, redirect stdin explicitly: < /dev/null to skip, or wait longer.
 ## What's Changed
 
+### ✨ New Features
+- Firmware tab now offers a hold-to-flash option so you can install firmware directly from a file on your computer
+
 ### 🔧 Improvements
-- The Firmware tab now matches the AutoDustBoot visual styling for a consistent look across the plugin
-- Firmware update progress reporting is more resilient and keeps showing accurate status throughout the process
+- The Update button on the Firmware tab is now always visible, making it easier to start a firmware update at any time
