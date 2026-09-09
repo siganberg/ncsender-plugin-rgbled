@@ -185,7 +185,6 @@
   .rgb-status-title { font-weight: 600; font-size: 1rem; color: var(--color-text-primary, #e5e7eb); margin-bottom: 2px; }
   .rgb-status-card.connected .rgb-status-title { color: #22c55e; }
   .rgb-status-sub { font-size: 0.82rem; color: var(--color-text-secondary, #94a3b8); }
-  .rgb-status-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
   /* Meta stat grid */
   .rgb-meta {
@@ -470,9 +469,6 @@
             <div id="rgb-statusTitle" class="rgb-status-title">Checking…</div>
             <div id="rgb-statusSub" class="rgb-status-sub">Looking for the RGB LED controller through the adapter…</div>
           </div>
-          <div class="rgb-status-right">
-            <button type="button" id="rgb-pairBtn" class="rgb-btn" style="display:none">Pair New Device</button>
-          </div>
         </div>
 
         <div class="rgb-meta">
@@ -609,7 +605,7 @@
       sub = 'Paired but currently offline — power on the RGB LED controller to reconnect.';
     } else {
       title = 'Not paired';
-      sub = 'Power on the RGB LED controller, then click Pair New Device.';
+      sub = 'Power on the RGB LED controller, then pair it from the Accessories dialog.';
     }
     document.getElementById('rgb-statusTitle').textContent = title;
     document.getElementById('rgb-statusSub').textContent = sub;
@@ -646,8 +642,6 @@
     count.disabled = lock;
     if (cshow) cshow.disabled = lock;
     document.getElementById('rgb-identifyBtn').disabled = lock;
-
-    document.getElementById('rgb-pairBtn').style.display = rgb.known ? 'none' : '';
   }
 
   function send(payload) {
@@ -851,11 +845,6 @@
     // Fire the show immediately so the user sees it on selection.
     // Skips 'None' — nothing to preview there.
     if (id !== 0) send('party ' + id);
-  });
-
-  // Pair
-  document.getElementById('rgb-pairBtn').addEventListener('click', function() {
-    fetch(BASE_URL + '/api/dongle/pair', { method: 'POST' }).catch(function() {});
   });
 
   // Live updates
