@@ -1,4 +1,4 @@
 ## What's Changed
 
 ### 🔧 Improvements
-- Removed the Firmware tab to streamline the plugin interface
+- Removed the Pair button from the plugin. Pair the RGB LED controller from the Accessories dialog, so there is one place to manage wireless devices
