@@ -574,6 +574,20 @@
   // Device state
   var rgb = { known: false, connected: false, lastSeenMs: -1, state: '', show: '', version: '', brightness: 255, idleMin: 0, count: 29, completionShow: 1 };
 
+  // A slider change takes a moment to reach the strip, and until it does the
+  // heartbeats still carry the old value. Hold what the user set (and anything
+  // they are still dragging) so the slider doesn't snap back and forth.
+  var held = {};   // key -> { v, until }
+  var dragging = {};
+  function hold(key, v) { held[key] = { v: v, until: Date.now() + 3000 }; }
+  function accept(key, n) {
+    if (dragging[key]) return false;
+    var h = held[key];
+    if (!h) return true;
+    if (n === h.v || Date.now() > h.until) { delete held[key]; return true; }
+    return false;
+  }
+
   function parseHeartbeat(payload) {
     if (!payload || typeof payload !== 'string') return;
     var parts = payload.split(/\s+/);
@@ -585,9 +599,9 @@
       if (k === 'state') rgb.state = v;
       else if (k === 'show') rgb.show = v;
       else if (k === 'v') rgb.version = v;
-      else if (k === 'b') { var n = parseInt(v, 10); if (isFinite(n)) rgb.brightness = n; }
-      else if (k === 'n') { var c = parseInt(v, 10); if (isFinite(c)) rgb.count = c; }
-      else if (k === 'idle') { var m = parseInt(v, 10); if (isFinite(m)) rgb.idleMin = m; }
+      else if (k === 'b') { var n = parseInt(v, 10); if (isFinite(n) && accept('b', n)) rgb.brightness = n; }
+      else if (k === 'n') { var c = parseInt(v, 10); if (isFinite(c) && accept('n', c)) rgb.count = c; }
+      else if (k === 'idle') { var m = parseInt(v, 10); if (isFinite(m) && accept('idle', m)) rgb.idleMin = m; }
       else if (k === 'cshow') { var cs = parseInt(v, 10); if (isFinite(cs)) rgb.completionShow = cs; }
     }
   }
@@ -616,19 +630,19 @@
 
     var slider = document.getElementById('rgb-brightness');
     var svalue = document.getElementById('rgb-brightnessValue');
-    if (document.activeElement !== slider) {
+    if (document.activeElement !== slider && !dragging['b']) {
       slider.value = String(rgb.brightness);
       svalue.textContent = String(rgb.brightness);
     }
     var idle = document.getElementById('rgb-idle');
     var idleValue = document.getElementById('rgb-idleValue');
-    if (document.activeElement !== idle) {
+    if (document.activeElement !== idle && !dragging['idle']) {
       idle.value = String(rgb.idleMin);
       idleValue.textContent = rgb.idleMin > 0 ? (rgb.idleMin + ' min') : 'off';
     }
     var count = document.getElementById('rgb-count');
     var countValue = document.getElementById('rgb-countValue');
-    if (document.activeElement !== count) {
+    if (document.activeElement !== count && !dragging['n']) {
       count.value = String(rgb.count);
       countValue.textContent = String(rgb.count);
     }
@@ -679,6 +693,7 @@
     var v = parseInt(e.target.value, 10);
     send('brightness ' + v);
     rgb.brightness = v;
+    hold('b', v);
   });
 
   // LED count
@@ -692,6 +707,7 @@
     if (!isFinite(v) || v < 1) v = 1;
     send('count ' + v);
     rgb.count = v;
+    hold('n', v);
   });
 
   // Idle-dim timeout
@@ -705,6 +721,16 @@
     if (!isFinite(v) || v < 0) v = 0;
     send('idle ' + v);
     rgb.idleMin = v;
+    hold('idle', v);
+  });
+
+  // A finger on a slider: never redraw it underneath the user.
+  [['rgb-brightness', 'b'], ['rgb-count', 'n'], ['rgb-idle', 'idle']].forEach(function(p) {
+    var el = document.getElementById(p[0]);
+    el.addEventListener('pointerdown', function() { dragging[p[1]] = true; });
+    ['pointerup', 'pointercancel', 'change'].forEach(function(ev) {
+      el.addEventListener(ev, function() { dragging[p[1]] = false; });
+    });
   });
 
   // Identify
