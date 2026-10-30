@@ -1,7 +1,7 @@
 {
   "id": "com.ncsender.rgbled",
   "name": "RGB LED",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "minAppVersion": "0.3.111",
   "author": "FrancisCreation",
   "description": "Sets up the machine-status LED strip: the wireless RGB LED controller, or the LED strip port on the Wireless I/O. The strip mirrors the app's status (idle / running / alarm / probing / job complete); here you change its colours, brightness, LED count, idle dim and job-complete show.",
