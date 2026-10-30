@@ -385,6 +385,13 @@
     color: #fff !important;
   }
   .rgb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .rgb-device-pick { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .rgb-device-pick[hidden] { display: none; }
+  .rgb-btn.rgb-pick.active {
+    background: var(--color-accent, #4a90e2) !important;
+    border-color: var(--color-accent, #4a90e2) !important;
+    color: #fff !important;
+  }
 
   /* Callout */
   .rgb-callout {
@@ -456,6 +463,14 @@
           The strip mirrors what the app's status shows — green while a job is running, red on alarm, and a small fireworks burst when a job finishes.
         </p>
 
+        <!-- Only when both are paired: the RGB LED controller and the Wireless I/O
+             each drive a strip, and every setting here goes to the one picked. -->
+        <div class="rgb-device-pick" id="rgb-devicePick" hidden>
+          <span class="rgb-controls-label">Strip</span>
+          <button type="button" class="rgb-btn rgb-pick" data-device="rgbled">RGB LED</button>
+          <button type="button" class="rgb-btn rgb-pick" data-device="xio">Wireless I/O</button>
+        </div>
+
         <div id="rgb-statusCard" class="rgb-status-card">
           <div class="rgb-status-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -467,7 +482,7 @@
           </div>
           <div class="rgb-status-body">
             <div id="rgb-statusTitle" class="rgb-status-title">Checking…</div>
-            <div id="rgb-statusSub" class="rgb-status-sub">Looking for the RGB LED controller through the adapter…</div>
+            <div id="rgb-statusSub" class="rgb-status-sub">Looking for the LED strip through the adapter…</div>
           </div>
         </div>
 
@@ -553,7 +568,14 @@
 <script>
 (function() {
   var BASE_URL = window.location.origin.replace(/\/$/, '') || 'http://localhost:__SERVER_PORT__';
+  // The strips this page can set up: the RGB LED controller, and the LED
+  // strip port on the Wireless I/O. Both take the same commands and send the
+  // same heartbeat fields. DEVICE is the one picked.
+  var DEVICES = { rgbled: 'RGB LED controller', xio: 'Wireless I/O' };
   var DEVICE = 'rgbled';
+  var DEVICE_KEY = 'rgbled.device';
+  // Saved per device; the RGB LED keeps its original keys
+  function lsKey(base) { return DEVICE === 'rgbled' ? base : base + '.' + DEVICE; }
 
   // Tab switching
   var btns = Array.prototype.slice.call(document.querySelectorAll('.rgb-nav-btn'));
@@ -616,10 +638,10 @@
       sub = 'via Wireless adapter' + (rgb.lastSeenMs >= 0 ? ' · last seen ' + rgb.lastSeenMs + ' ms ago' : '');
     } else if (rgb.known) {
       title = 'Not connected';
-      sub = 'Paired but currently offline — power on the RGB LED controller to reconnect.';
+      sub = 'Paired but currently offline — power on the ' + DEVICES[DEVICE] + ' to reconnect.';
     } else {
       title = 'Not paired';
-      sub = 'Power on the RGB LED controller, then pair it from the Accessories dialog.';
+      sub = 'Power on the ' + DEVICES[DEVICE] + ', then pair it from the Accessories dialog.';
     }
     document.getElementById('rgb-statusTitle').textContent = title;
     document.getElementById('rgb-statusSub').textContent = sub;
@@ -771,13 +793,12 @@
   // no cheap read-back yet, so we keep a mirror here to populate the UI on
   // reload. Keyed by dongle device id (constant "rgbled") so switching
   // machines picks up their own overrides.
-  var LS_KEY = 'rgbled.colors.v1';
   function loadOverrides() {
-    try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {}; }
+    try { return JSON.parse(localStorage.getItem(lsKey('rgbled.colors.v1')) || '{}') || {}; }
     catch (_) { return {}; }
   }
   function saveOverrides(map) {
-    try { localStorage.setItem(LS_KEY, JSON.stringify(map)); } catch (_) {}
+    try { localStorage.setItem(lsKey('rgbled.colors.v1'), JSON.stringify(map)); } catch (_) {}
   }
 
   var overrides = loadOverrides();
@@ -848,12 +869,14 @@
   document.getElementById('rgb-xfollow').addEventListener('change', function(e) {
     var on = !!e.target.checked;
     send('follow ' + (on ? 'on' : 'off'));
-    try { localStorage.setItem('rgbled.xfollow', on ? '1' : '0'); } catch (_) {}
+    try { localStorage.setItem(lsKey('rgbled.xfollow'), on ? '1' : '0'); } catch (_) {}
   });
-  try {
-    var savedOn = localStorage.getItem('rgbled.xfollow') === '1';
-    document.getElementById('rgb-xfollow').checked = savedOn;
-  } catch (_) {}
+  function loadFollow() {
+    var on = false;
+    try { on = localStorage.getItem(lsKey('rgbled.xfollow')) === '1'; } catch (_) {}
+    document.getElementById('rgb-xfollow').checked = on;
+  }
+  loadFollow();
 
   // Job Completion dropdown
   var cshowSelect = document.getElementById('rgb-cshow');
@@ -914,6 +937,39 @@
   }
   window.addEventListener('pagehide', stop);
 
-  start();
+  // Which strip: the one that is paired; with both, the last one picked
+  // (the RGB LED controller first).
+  function useDevice(id) {
+    if (!DEVICES[id] || id === DEVICE && rgb.known) return;
+    DEVICE = id;
+    try { localStorage.setItem(DEVICE_KEY, id); } catch (_) {}
+    rgb.known = false; rgb.connected = false; rgb.lastSeenMs = -1; rgb.state = ''; rgb.show = ''; rgb.version = '';
+    held = {};
+    overrides = loadOverrides();
+    buildColorRows();
+    loadFollow();
+    document.querySelectorAll('.rgb-pick').forEach(function(b) { b.classList.toggle('active', b.getAttribute('data-device') === DEVICE); });
+    fetchDevice();
+  }
+  document.querySelectorAll('.rgb-pick').forEach(function(b) {
+    b.addEventListener('click', function() { useDevice(b.getAttribute('data-device')); });
+  });
+  function pickDevice() {
+    return fetch(BASE_URL + '/api/dongle/devices')
+      .then(function(r) { return r.ok ? r.json() : []; })
+      .then(function(list) {
+        list = Array.isArray(list) ? list : (list && list.devices) || [];
+        var paired = list.map(function(d) { return d && d.name; }).filter(function(n) { return !!DEVICES[n]; });
+        var saved = null;
+        try { saved = localStorage.getItem(DEVICE_KEY); } catch (_) {}
+        var id = paired.indexOf(saved) >= 0 ? saved : (paired[0] === 'xio' && paired.indexOf('rgbled') < 0 ? 'xio' : 'rgbled');
+        document.getElementById('rgb-devicePick').hidden = paired.length < 2;
+        DEVICE = id === 'rgbled' ? 'xio' : 'rgbled';   // so useDevice always applies
+        useDevice(id);
+      })
+      .catch(function() {});
+  }
+
+  pickDevice().then(start);
 })();
 </script>

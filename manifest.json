@@ -4,7 +4,7 @@
   "version": "0.1.8",
   "minAppVersion": "0.3.111",
   "author": "FrancisCreation",
-  "description": "Drives the wireless RGB LED accessory strip. Pushes machine status to the LED controller so the strip mirrors what the app's header shows — idle / running / alarm / probing / job-complete.",
+  "description": "Sets up the machine-status LED strip: the wireless RGB LED controller, or the LED strip port on the Wireless I/O. The strip mirrors the app's status (idle / running / alarm / probing / job complete); here you change its colours, brightness, LED count, idle dim and job-complete show.",
   "entry": "index.js",
   "commands": "commands.js",
   "configUi": "config.html",
